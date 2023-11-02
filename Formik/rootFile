@@ -1,0 +1,116 @@
+"use client"
+
+import React, { useState } from 'react'
+import { ColStack, RowStack } from '../Layout'
+import { Button } from '../ui/button'
+import Social from './Social'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import Location from '../Location'
+import InputShipping from '../Search/InputShipping'
+import { useDispatch, useSelector } from 'react-redux'
+import { RootState } from '../../store'
+import useCountryMethods from '../../hooks/useCountryMethods'
+import { Formik, Form } from 'formik';
+import FormikField from '../inputs/FormikField'
+import { authHandle } from '../../store/authSlice'
+import { signinSchema, signupType } from '../../schema'
+import Toast from '../Toast'
+
+interface Props  extends React.HtmlHTMLAttributes<HTMLDivElement> {}
+
+const Register = ({  }: Props) => {
+  const country = useSelector((state: RootState) => state.root.country)
+  const dispatch = useDispatch()
+
+  const [countryData, setCountyData] = useState({
+    code: country.code,
+    country: ""
+  })
+
+  const { selectCountry, listCountry } = useCountryMethods(countryData.code, countryData.country)
+
+  const onSubmit = (values: signupType) => {
+    console.log("values", values)
+    dispatch(authHandle({
+      email: values.email,
+      password: values.password,
+      isoCode: values.isoCode
+    }))
+    Toast({ variant: "success", title: 'success', description: 'create account successeeded' })
+  };
+
+  return (
+    <Formik
+      onSubmit={onSubmit}
+      validationSchema={signinSchema}
+      initialValues={{
+        isoCode: "",
+        email: '',
+        password: '',
+      }}
+    >
+      {
+        formik => {
+          console.log(formik)
+          return (
+            <Form>
+              {/* form section */}
+              <ColStack className='gap-4'>
+                <Select
+                  onValueChange={ev =>  formik.setValues({ ...formik.values, isoCode: ev })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={
+                      <RowStack className="gap-2">
+                        <Location />
+                        <span>{selectCountry?.name}</span>
+                      </RowStack>
+                    }
+                  />
+                  </SelectTrigger>
+                  <SelectContent className='-left-5'>
+                    <SelectGroup>
+
+                      <InputShipping
+                        onChange={ev => setCountyData({ ...countryData,  country: ev.target.value})}
+                        value={countryData.country}
+                        placeholder='Search for Country'
+                      />
+
+                      <div className='max-h-[10rem] overflow-y-auto'>
+                      {
+                        listCountry?.map((item, idx) => (<SelectItem key={idx} value={item.isoCode}>
+                          <RowStack className="gap-2">
+                            <span>{item.flag}</span>
+                            <span>{item.name}</span>
+                          </RowStack>
+                        </SelectItem>))
+                      }
+                      </div>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+
+                <FormikField
+                  name='email'
+                  placeholder='Email'
+                  className='border'
+                />
+                <FormikField
+                  name='password'
+                  placeholder='Password'
+                  className='border'
+                />
+
+                <Button type="submit" variant="secondary" size="lg" className='rounded-full'>Create account</Button>
+
+              </ColStack>
+            </Form>
+          )
+        }
+      }
+  </Formik>
+)
+}
+
+export default Register
