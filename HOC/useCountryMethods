@@ -1,0 +1,71 @@
+"use client"
+
+import { Country, City, ICity, ICountry } from "country-state-city"
+import { useLayoutEffect, useState } from "react"
+import { useSelector } from "react-redux"
+import { RootState } from "@/store"
+
+type IState = {
+  country: ICountry,
+  city: ICity[] | undefined,
+  listCountry: ICountry[]
+}
+const useCountryMethods = (currentCode?: string, nameOfCountry?: string, nameOfCity?: string) => {
+
+  // select sotre of country
+  const country = useSelector((store: RootState) => store.root.country)
+
+  // search country by prefix code {MA, AL, EG, PL}
+  const selectCountry = (code: string) => Country.getCountryByCode(code)
+
+  const [state, setState] = useState<IState>({
+    country: selectCountry(currentCode!)!,
+    city: undefined,
+    listCountry: []
+  })
+
+  // search city of basde on country code and filter name
+  const selectCity = (city: string, code: string) => {
+    if(city === "")
+      return City.getCitiesOfCountry(code)
+    return City.getCitiesOfCountry(code)?.filter((pre) => pre.name?.toLowerCase().includes(city?.toLowerCase()))
+  }
+
+  // search for country by filtering input
+  const countryList = (countryName: string, code: string) => {
+    if(countryName === "") {
+      return Country.getAllCountries()
+    } else {
+      return Country.getAllCountries().filter(pre => pre.name?.toLowerCase().includes(countryName?.toLowerCase()))
+    }
+  }
+
+  useLayoutEffect(() => {
+    setState((pre: any) => ({
+      ...pre,
+      country: selectCountry(country.code)
+    }))
+  }, [country.code])
+
+  useLayoutEffect(() => {
+    setState((pre: any) => ({
+      ...pre,
+      city: selectCity(nameOfCity!, currentCode!)
+    }))
+  }, [nameOfCity, currentCode])
+
+  useLayoutEffect(() => {
+    setState((pre: any) => ({
+      ...pre,
+      listCountry: countryList(nameOfCountry!, currentCode!)
+    }))
+  }, [nameOfCountry, currentCode])
+
+  return {
+    selectCountry: state.country,
+    city: state.city,
+    listCountry: state.listCountry
+  }
+}
+
+export default useCountryMethods
