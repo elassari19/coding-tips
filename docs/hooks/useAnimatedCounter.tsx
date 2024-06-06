@@ -20,3 +20,5 @@ const useAnimatedCounter = (
 
   return counter;
 }
+
+export default useAnimatedCounter
